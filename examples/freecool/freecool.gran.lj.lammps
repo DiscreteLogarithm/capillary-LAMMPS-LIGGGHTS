@@ -1,0 +1,48 @@
+atom_style      sphere
+boundary        p p p
+newton          off
+comm_modify     vel yes
+neighbor        2.0 bin
+neigh_modify    delay 0
+
+variable        diameter equal 4.0
+variable        mass equal 1.0
+variable        size equal 3
+variable        initial_temperature equal 50.0
+variable        rupture_energy equal 1.0
+variable        rupture_distance equal 0.07*${diameter}
+variable        capillary_force equal ${rupture_energy}/${rupture_distance}
+variable        kn equal 4.0e5
+variable        dt equal 1.0e-5
+variable        pi equal 3.14
+variable        particle_volume equal ${pi}*${diameter}^3/6
+variable        number_density equal ${volume_fraction}/${particle_volume}
+
+lattice         sc ${number_density}
+region          box block 0 ${size} 0 ${size} 0 ${size}
+create_box      1 box
+create_atoms    1 box
+
+set             type 1 diameter ${diameter}
+set             type 1 mass ${mass}
+
+compute         temp all temp/sphere
+
+velocity        all create ${initial_temperature} ${seed}  mom yes rot yes temp temp
+
+pair_style      gran/hertz/history ${kn} 0.0 0.0 0.0 0.0 0
+pair_coeff      * *
+
+timestep        ${dt}
+
+fix             5 all addcapillaryforce 0.0 ${rupture_distance} 0.0 -${capillary_force}
+fix             1 all nve/sphere
+
+thermo_style    custom time ke pe epair etotal temp c_temp
+thermo          10000
+
+dump            1 all xyz 10000 dump.xyz
+
+log             thermo-${volume_fraction}
+
+run             100000000

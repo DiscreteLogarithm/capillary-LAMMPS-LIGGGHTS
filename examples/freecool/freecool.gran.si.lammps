@@ -1,0 +1,53 @@
+units           si
+atom_style	sphere
+boundary	p p p
+newton		off
+comm_modify	vel yes
+neighbor	1.0e-3 bin
+
+variable        sigma equal 1e-3
+variable        epsilon equal 1e-9
+
+variable	d equal 1.0*${sigma}
+variable	pi equal 3.14
+variable	vparticle equal ${pi}*$d*$d*$d/6
+variable	a equal (${vparticle}/${vfraction})^(1/3)
+variable	E0 equal 50.*${epsilon}
+variable        kB equal 1.38e-23
+variable        T0 equal ${E0}/${kB}
+variable	dc equal 0.07*$d
+variable	fc equal 1.0*${epsilon}/${dc}
+variable        kn equal 4.e5*${epsilon}/${sigma}
+variable	zlo equal zlo
+variable	zhi equal zhi
+
+lattice		sc $a
+region		box block 0 3 0 3 0 3
+create_box	1 box
+create_atoms	1 box
+
+set		type 1 diameter $d
+set		type 1 mass 1.0
+
+compute		temp all temp/sphere
+
+velocity	all create ${T0} ${seed}  mom yes rot yes temp temp
+
+pair_style      gran/hertz/history     ${kn} 0.0 0.0 0.0 0.5 0
+#pair_style	gran/hooke/history/wet 4.0e3 0.0 0.0 0.0 0.5 0 0.0 ${dc} 0.0 -${fc}
+pair_coeff	* *
+
+timestep	1.0e-5
+
+fix             5 all addcapillaryforce 0.0 ${dc} 0.0 -${fc}
+fix		1 all nve/sphere
+
+thermo_style	custom time ke pe epair etotal temp c_temp
+thermo		10000
+
+dump            1 all xyz 10000 dump.xyz
+
+echo		none
+log		thermo-${vfraction}
+
+run		100000000
