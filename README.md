@@ -4,11 +4,15 @@ Simple capillary force model for granular matter in LAMMPS/LIGGGHTS
 
 ## Installation
 
-After copying the files to LAMMPS/LIGGGHTS directory, use this:
+First apply the patch:
+
+    patch -p1 < patch.capillary
+
+Then enable this package by:
 
     make yes-user-capillary
 
-Then compile again
+Then compile again as usual.
 
 ## Uninstallation
 
@@ -17,3 +21,4 @@ Use following command:
     make no-user-capillary
 
 Then compile again
+

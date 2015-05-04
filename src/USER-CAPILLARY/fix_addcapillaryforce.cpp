@@ -12,8 +12,10 @@
 ------------------------------------------------------------------------- */
 
 /* ----------------------------------------------------------------------
-   Contributing authors: Leo Silbert (SNL), Gary Grest (SNL)
-------------------------------------------------------------------------- */
+ *   Contributing authors:
+ *   Seyed Mehdi Vaez Allaei (University of Tehran) smvaez at gmail.com
+ *   Morteza Jalalvand (University of Tehran) jalalvand.m at gmail.com
+ * ---------------------------------------------------------------------- */
 
 #include "math.h"
 #include "string.h"
@@ -44,10 +46,7 @@ enum {CONSTANT,EQUAL,ATOM};
 FixAddCapillaryForce::FixAddCapillaryForce(LAMMPS *lmp, int narg, char **arg) :
   Fix(lmp, narg, arg)
 {
-  if (narg != 7) error->all(FLERR,"Illegal fix addcapillayforce command");
-
-  if (!atom->sphere_flag)
-    error->all(FLERR,"Fix addcapillayforce requires atom style sphere");
+  if (narg != 7) error->all(FLERR, "Illegal fix addcapillayforce command");
 
   restart_global = 1;
   restart_peratom = 1;
@@ -55,13 +54,13 @@ FixAddCapillaryForce::FixAddCapillaryForce(LAMMPS *lmp, int narg, char **arg) :
   current_nmax = 0;
 
   startstr = stopstr = slopestr = interceptstr = NULL;
-  
+
   if (strstr(arg[3],"v_") == arg[3]) {
     int n = strlen(&arg[3][2]) + 1;
     startstr = new char[n];
     strcpy(startstr,&arg[3][2]);
   } else {
-    start_trigger = force->numeric(FLERR,arg[3]);
+    start_trigger = force->numeric(FLERR, arg[3]);
     startstyle = CONSTANT;
   }
   if (strstr(arg[4],"v_") == arg[4]) {
@@ -69,7 +68,7 @@ FixAddCapillaryForce::FixAddCapillaryForce(LAMMPS *lmp, int narg, char **arg) :
     stopstr = new char[n];
     strcpy(stopstr,&arg[4][2]);
   } else {
-    stop_trigger = force->numeric(FLERR,arg[4]);
+    stop_trigger = force->numeric(FLERR, arg[4]);
     stopstyle = CONSTANT;
   }
   if (strstr(arg[5],"v_") == arg[5]) {
@@ -77,7 +76,7 @@ FixAddCapillaryForce::FixAddCapillaryForce(LAMMPS *lmp, int narg, char **arg) :
     slopestr = new char[n];
     strcpy(slopestr,&arg[5][2]);
   } else {
-    slope = force->numeric(FLERR,arg[5]);
+    slope = force->numeric(FLERR, arg[5]);
     slopestyle = CONSTANT;
   }
   if (strstr(arg[6],"v_") == arg[6]) {
@@ -85,13 +84,13 @@ FixAddCapillaryForce::FixAddCapillaryForce(LAMMPS *lmp, int narg, char **arg) :
     interceptstr = new char[n];
     strcpy(interceptstr,&arg[6][2]);
   } else {
-    intercept = force->numeric(FLERR,arg[6]);
+    intercept = force->numeric(FLERR, arg[6]);
     interceptstyle = CONSTANT;
   }
-  
+
   atom->add_callback(0);
   atom->add_callback(1);
-  
+
   if (atom->map_style == 0) {
     atom->map_init();
     atom->map_set();
@@ -132,49 +131,49 @@ int FixAddCapillaryForce::setmask()
 void FixAddCapillaryForce::init()
 {
   // check variables
-  
+
   if (startstr) {
     startvar = input->variable->find(startstr);
-    if (startvar < 0) error->all(FLERR,"Variable name for fix addcapillayforce"
+    if (startvar < 0) error->all(FLERR, "Variable name for fix addcapillayforce"
                                        " does not exist");
     if (input->variable->equalstyle(startvar)) startstyle = EQUAL;
     else if (input->variable->atomstyle(startvar)) startstyle = ATOM;
-    else error->all(FLERR,"Variable for fix addcapillayforce "
+    else error->all(FLERR, "Variable for fix addcapillayforce "
                           "is invalid style");
   }
   if (stopstr) {
     stopvar = input->variable->find(stopstr);
-    if (stopvar < 0) error->all(FLERR,"Variable name for fix addcapillayforce"
+    if (stopvar < 0) error->all(FLERR, "Variable name for fix addcapillayforce"
                                       " does not exist");
     if (input->variable->equalstyle(stopvar)) stopstyle = EQUAL;
     else if (input->variable->atomstyle(stopvar)) stopstyle = ATOM;
-    else error->all(FLERR,"Variable for fix addcapillayforce "
+    else error->all(FLERR, "Variable for fix addcapillayforce "
                           "is invalid style");
   }
   if (slopestr) {
     slopevar = input->variable->find(slopestr);
-    if (slopevar < 0) error->all(FLERR,"Variable name for fix addcapillayforce"
+    if (slopevar < 0) error->all(FLERR, "Variable name for fix addcapillayforce"
                                        " does not exist");
     if (input->variable->equalstyle(slopevar)) slopestyle = EQUAL;
-    else error->all(FLERR,"Variable for fix addcapillayforce "
+    else error->all(FLERR, "Variable for fix addcapillayforce "
                           "is invalid style");
   }
   if (interceptstr) {
     interceptvar = input->variable->find(interceptstr);
-    if (interceptvar < 0) error->all(FLERR,"Variable name for fix "
+    if (interceptvar < 0) error->all(FLERR, "Variable name for fix "
                                            "addcapillayforce does not exist");
     if (input->variable->equalstyle(interceptvar)) interceptstyle = EQUAL;
-    else error->all(FLERR,"Variable for fix addcapillayforce"
+    else error->all(FLERR, "Variable for fix addcapillayforce"
                           " is invalid style");
   }
-  
+
   if (startstyle == ATOM || stopstyle == ATOM) varflag = ATOM;
   else if (startstyle == EQUAL || stopstyle == EQUAL || slopestyle == EQUAL ||
            interceptstyle == EQUAL) varflag = EQUAL;
   else varflag = CONSTANT;
 
   grow_arrays(atom->nmax);
-  
+
   if (strstr(update->integrate_style,"respa"))
     nlevels_respa = ((Respa *) update->integrate)->nlevels;
 }
@@ -197,16 +196,16 @@ void FixAddCapillaryForce::setup(int vflag)
 void FixAddCapillaryForce::pre_force(int vflag)
 {
   int i,j,ii,inum,*mask,*ilist,*numneigh,**firstneigh;
-  std::list <tagint>::iterator it;
+  std::list <int>::iterator it;
   double xtmp,ytmp,ztmp,delx,dely,delz;
   double radi,radj,radsum,rsq,r,rinv;
   double capillaryforce,fx,fy,fz;
-  
+
   double **x = atom->x;
   double **f = atom->f;
   double *radius = atom->radius;
-  
-  tagint *tag = atom->tag;
+
+  int *tag = atom->tag;
   NeighList *list = force->pair->list;
   int nlocal = atom->nlocal;
   inum = list->inum;
@@ -214,13 +213,13 @@ void FixAddCapillaryForce::pre_force(int vflag)
   mask = atom->mask;
   numneigh = list->numneigh;
   firstneigh = list->firstneigh;
-  
+
   if (varflag != CONSTANT) variable_update();
-  
+
   bridge_update();
 
   // loop over neighbors of my atoms
-  
+
   for (ii = 0; ii < inum; ii++) {
     i = ilist[ii];
     if (!(mask[i] & groupbit)) continue;
@@ -241,7 +240,7 @@ void FixAddCapillaryForce::pre_force(int vflag)
       radsum = radi + radj;
       r = sqrt(rsq);
       rinv = 1/r;
-      
+
       capillaryforce = (slope*(r-radsum) + intercept)*rinv;
       fx = delx*capillaryforce;
       fy = dely*capillaryforce;
@@ -272,10 +271,10 @@ void FixAddCapillaryForce::pre_force_respa(int vflag, int ilevel, int iloop)
 void FixAddCapillaryForce::variable_update()
 {
   modify->clearstep_compute();
-  
-  if (startstyle == EQUAL) 
+
+  if (startstyle == EQUAL)
     start_trigger = input->variable->compute_equal(startvar);
-  if (stopstyle == EQUAL) 
+  if (stopstyle == EQUAL)
     stop_trigger = input->variable->compute_equal(stopvar);
   if (slopestyle == EQUAL) slope = input->variable->compute_equal(slopevar);
   if (interceptstyle == EQUAL)
@@ -288,7 +287,7 @@ void FixAddCapillaryForce::variable_update()
       input->variable->compute_atom(stopvar,igroup,&trigger[0][0],2,0);
     else for (int i=0; i<current_nmax; i++) trigger[i][0] = stop_trigger;
   }
-  
+
   modify->addstep_compute(update->ntimestep + 1);
 }
 
@@ -299,18 +298,18 @@ void FixAddCapillaryForce::variable_update()
 void FixAddCapillaryForce::bridge_update()
 {
   int i,j,ii,jj,inum,jnum,nlocal;
-  std::list <tagint>::iterator it;
+  std::list <int>::iterator it;
   bool found;
   static bool previous = false;
   double xtmp,ytmp,ztmp,delx,dely,delz;
   double radi,radj,radsum,rsq;
   double istart, istop, jstart, jstop;
   int *mask,*ilist,*jlist,*numneigh,**firstneigh;
-  
+
   double **x = atom->x;
   double *radius = atom->radius;
 
-  tagint *tag = atom->tag;
+  int *tag = atom->tag;
   NeighList *list = force->pair->list;
   mask = atom->mask;
   nlocal = atom->nlocal;
@@ -318,10 +317,10 @@ void FixAddCapillaryForce::bridge_update()
   ilist = list->ilist;
   numneigh = list->numneigh;
   firstneigh = list->firstneigh;
-  
+
   nlocal_neigh = (inum)?ilist[inum-1]:0;
   maxbridge = 0;
-  
+
   if (varflag != ATOM) {
     for (ii = 0; ii < inum; ii++) {
       i = ilist[ii];
@@ -330,9 +329,9 @@ void FixAddCapillaryForce::bridge_update()
       ytmp = x[i][1];
       ztmp = x[i][2];
       radi = radius[i];
-      
+
       // find and delete broken bridges of i
-      
+
       for (it = bridgelist[i].begin(); it != bridgelist[i].end();) {
         j = atom->map(*it);
         delx = xtmp - x[j][0];
@@ -342,32 +341,31 @@ void FixAddCapillaryForce::bridge_update()
         rsq = delx*delx + dely*dely + delz*delz;
         radj = radius[j];
         radsum = radi + radj + stop_trigger;
-        
+
         if (rsq <= radsum*radsum) it++;
         else {
           it = bridgelist[i].erase(it);
           if (j < nlocal) bridgelist[j].remove(tag[i]);
         }
       }
-      
+
       // loop over neighbors of i
-      
+
       jlist = firstneigh[i];
       jnum = numneigh[i];
       for (jj = 0; jj < jnum; jj++) {
         j = jlist[jj];
-        j &= NEIGHMASK;
         if (!(mask[j] & groupbit)) continue;
-        
+
         // skip j if it's already in the bridge list of i
-        
+
         found = false;
         for (it = bridgelist[i].begin(); it != bridgelist[i].end(); it++)
           if (found = (tag[j] == *it)) break;
         if (found) continue;
-        
+
         // form new bridges
-        
+
         delx = xtmp - x[j][0];
         dely = ytmp - x[j][1];
         delz = ztmp - x[j][2];
@@ -375,7 +373,7 @@ void FixAddCapillaryForce::bridge_update()
         rsq = delx*delx + dely*dely + delz*delz;
         radj = radius[j];
         radsum = radi + radj + start_trigger;
-        
+
         if (rsq <= radsum*radsum) {
           bridgelist[i].push_back(tag[j]);
           if (j < nlocal) bridgelist[j].push_back(tag[i]);
@@ -393,9 +391,9 @@ void FixAddCapillaryForce::bridge_update()
       radi = radius[i];
       istop = trigger[i][0];
       istart = trigger[i][1];
-      
+
       // find and delete broken bridges of i
-      
+
       for (it = bridgelist[i].begin(); it != bridgelist[i].end();) {
         j = atom->map(*it);
         delx = xtmp - x[j][0];
@@ -406,32 +404,31 @@ void FixAddCapillaryForce::bridge_update()
         radj = radius[j];
         jstop = trigger[j][0];
         radsum = radi + radj + istop + jstop;
-        
+
         if (rsq <= radsum*radsum) it++;
         else {
           it = bridgelist[i].erase(it);
           if (j < nlocal) bridgelist[j].remove(tag[i]);
         }
       }
-      
+
       // loop over neighbors of i
-      
+
       jlist = firstneigh[i];
       jnum = numneigh[i];
       for (jj = 0; jj < jnum; jj++) {
         j = jlist[jj];
-        j &= NEIGHMASK;
         if (!(mask[j] & groupbit)) continue;
-        
+
         // skip j if it's already in the bridge list of i
-        
+
         found = false;
         for (it = bridgelist[i].begin(); it != bridgelist[i].end(); it++)
           if (found = (tag[j] == *it)) break;
           if (found) continue;
-          
+
           // form new bridges
-          
+
           delx = xtmp - x[j][0];
         dely = ytmp - x[j][1];
         delz = ztmp - x[j][2];
@@ -440,7 +437,7 @@ void FixAddCapillaryForce::bridge_update()
         radj = radius[j];
         jstart = trigger[j][1];
         radsum = radi + radj + istart + jstart;
-        
+
         if (rsq <= radsum*radsum) {
           bridgelist[i].push_back(tag[j]);
           if (j < nlocal) bridgelist[j].push_back(tag[i]);
@@ -457,9 +454,9 @@ void FixAddCapillaryForce::bridge_update()
 
 double FixAddCapillaryForce::memory_usage()
 {
-  double bytes = current_nmax * sizeof(std::list <tagint>);
-  for (int i=0; i<current_nmax; i++) 
-    bytes += bridgelist[i].size()*(sizeof(tagint) + 2*sizeof(tagint*));
+  double bytes = current_nmax * sizeof(std::list <int>);
+  for (int i=0; i<current_nmax; i++)
+    bytes += bridgelist[i].size()*(sizeof(int) + 2*sizeof(int*));
   if (varflag == ATOM) bytes += current_nmax*2*sizeof(double);
   return bytes;
 }
@@ -488,7 +485,7 @@ void FixAddCapillaryForce::restart(char *buf)
 {
   int n = 0;
   double *list = (double *) buf;
-  
+
   start_trigger = list[n++];
   stop_trigger = list[n++];
   slope = list[n++];
@@ -502,12 +499,12 @@ void FixAddCapillaryForce::restart(char *buf)
 void FixAddCapillaryForce::grow_arrays(int nmax)
 {
   if (current_nmax) {
-    std::list <tagint> *tmp = new std::list <tagint> [nmax];
+    std::list <int> *tmp = new std::list <int> [nmax];
     for (int i=0; i<current_nmax; i++) tmp[i] = bridgelist[i];
     delete [] bridgelist;
     bridgelist = tmp;
   }
-  else bridgelist = new std::list <tagint> [nmax];
+  else bridgelist = new std::list <int> [nmax];
   if (varflag == ATOM)
     memory->grow(trigger, nmax, 2, "addcapillayforce:trigger");
   current_nmax = nmax;
@@ -519,9 +516,9 @@ void FixAddCapillaryForce::grow_arrays(int nmax)
 
 void FixAddCapillaryForce::copy_arrays(int i, int j, int delflag)
 {
-  std::list <tagint>::iterator it;
+  std::list <int>::iterator it;
   bridgelist[j].clear();
-  for (it = bridgelist[i].begin(); it != bridgelist[i].end(); it++) 
+  for (it = bridgelist[i].begin(); it != bridgelist[i].end(); it++)
     bridgelist[j].push_back(*it);
 }
 
@@ -532,7 +529,7 @@ void FixAddCapillaryForce::copy_arrays(int i, int j, int delflag)
 int FixAddCapillaryForce::pack_exchange(int i, double *buf)
 {
   int m = 0;
-  std::list <tagint>::iterator it;
+  std::list <int>::iterator it;
   buf[m++] = bridgelist[i].size();
   for (it = bridgelist[i].begin(); it != bridgelist[i].end(); it++)
     buf[m++] = *it;
@@ -547,11 +544,11 @@ int FixAddCapillaryForce::pack_exchange(int i, double *buf)
 int FixAddCapillaryForce::unpack_exchange(int i, double *buf)
 {
   int j, nlocal = atom->nlocal, m = 0, npartner = static_cast <int> (buf[m++]);
-  tagint tagj;
+  int tagj;
   maxbridge = MAX (maxbridge, npartner);
   bridgelist[i].clear();
   for (int n=0; n<npartner; n++) {
-    tagj = static_cast <tagint> (buf[m++]);
+    tagj = static_cast <int> (buf[m++]);
     bridgelist[i].push_back(tagj);
   }
   return m;
@@ -564,9 +561,9 @@ int FixAddCapillaryForce::unpack_exchange(int i, double *buf)
 int FixAddCapillaryForce::pack_restart(int i, double *buf)
 {
   int m = 0;
-  std::list <tagint>::iterator it;
+  std::list <int>::iterator it;
   buf[m++] = bridgelist[i].size() + 1;
-  for (it = bridgelist[i].begin(); it != bridgelist[i].end(); it++) 
+  for (it = bridgelist[i].begin(); it != bridgelist[i].end(); it++)
     buf[m++] = *it;
   return m;
 }
@@ -587,8 +584,8 @@ void FixAddCapillaryForce::unpack_restart(int i, int nth)
   int npartner = static_cast <int> (extra[i][m++]) - 1;
   maxbridge = MAX (maxbridge, npartner);
   bridgelist[i].clear();
-  for (int n=0; n<npartner; n++) 
-    bridgelist[i].push_back(static_cast <tagint> (extra[i][m++]));
+  for (int n=0; n<npartner; n++)
+    bridgelist[i].push_back(static_cast <int> (extra[i][m++]));
 }
 
 /* ----------------------------------------------------------------------
@@ -598,7 +595,7 @@ void FixAddCapillaryForce::unpack_restart(int i, int nth)
 int FixAddCapillaryForce::maxsize_restart()
 {
   // maxbridge_all = max # of bridges across all procs
-  
+
   int maxbridge_all;
   MPI_Allreduce (&maxbridge, &maxbridge_all, 1, MPI_INT, MPI_MAX, world);
   return maxbridge_all + 1;

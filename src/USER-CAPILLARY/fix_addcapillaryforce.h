@@ -11,6 +11,12 @@
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 
+/* ----------------------------------------------------------------------
+ *   Contributing authors:
+ *   Seyed Mehdi Vaez Allaei (University of Tehran) smvaez at gmail.com
+ *   Morteza Jalalvand (University of Tehran) jalalvand.m at gmail.com
+ * ---------------------------------------------------------------------- */
+
 #ifdef FIX_CLASS
 
 FixStyle(addcapillaryforce,FixAddCapillaryForce)
@@ -52,14 +58,14 @@ class FixAddCapillaryForce : public Fix {
    char *startstr, *stopstr, *slopestr, *interceptstr;
    int startstyle, stopstyle, slopestyle, interceptstyle;
    int varflag;
-   
+
   int nlevels_respa,current_nmax,nlocal_neigh,maxbridge;
   double start_trigger, stop_trigger;
   double slope, intercept;
-  
+
   double **trigger;
 
-  std::list <tagint> *bridgelist;
+  std::list <int> *bridgelist;
 
   void variable_update();
   void bridge_update();
@@ -78,29 +84,12 @@ Self-explanatory.  Check the input script syntax and compare to the
 documentation for the command.  You can use -echo screen as a
 command-line option when running LAMMPS to see the offending line.
 
-E: Fix wall/gran requires atom style sphere
+E: Variable name for fix addcapillayforce does not exist
 
 Self-explanatory.
 
-E: Cannot use wall in periodic dimension
+E: Variable for fix addcapillayforce is invalid style
 
 Self-explanatory.
-
-E: Cannot wiggle and shear fix wall/gran
-
-Cannot specify both options at the same time.
-
-E: Invalid wiggle direction for fix wall/gran
-
-Self-explanatory.
-
-E: Invalid shear direction for fix wall/gran
-
-Self-explanatory.
-
-E: Fix wall/gran is incompatible with Pair style
-
-Must use a granular pair style to define the parameters needed for
-this fix.
 
 */
