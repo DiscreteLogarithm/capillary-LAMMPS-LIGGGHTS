@@ -2,7 +2,7 @@
 
 Simple capillary force model for granular matter in LAMMPS/LIGGGHTS
 
-** Installation
+## Installation
 
 After copying the files to LAMMPS directory, use this:
 
@@ -10,7 +10,7 @@ After copying the files to LAMMPS directory, use this:
 
 Then compile again
 
-** Uninstallation
+## Uninstallation
 
 Use following command:
 
